@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemistry Diagnostic Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --secondary: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e1b4b);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            background: -webkit-linear-gradient(45deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
+
+        /* Proficiency Bars */
+        .prof-item {
+            margin-bottom: 1rem;
+        }
+
+        .prof-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .prof-bar-bg {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            height: 12px;
+            overflow: hidden;
+        }
+
+        .prof-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 8px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Question Section */
+        #bridge-question {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .confidence-slider {
+            width: 100%;
+            margin: 1rem 0;
+            appearance: none;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .confidence-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .confidence-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, var(--primary), #8b5cf6);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        #action-box {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--secondary);
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Chemistry Diagnostic Dashboard</h1>
+
+    <div class="container">
+        <!-- Left Panel: Proficiency Map -->
+        <div class="card">
+            <h2 class="card-title">Chapter Proficiency</h2>
+            <div id="proficiency-container">
+                <p style="color: var(--text-muted);">Loading proficiency map...</p>
+            </div>
+        </div>
+
+        <!-- Right Panel: Bridge Question Engine -->
+        <div class="card">
+            <h2 class="card-title">Bridge Question Engine</h2>
+            
+            <div id="bridge-question">
+                Click "Generate Question" to load a Level 5 Bridge challenge.
+            </div>
+
+            <label for="confidence" style="display: block; margin-top: 1rem;">Confidence Level (1-5)</label>
+            <input type="range" min="1" max="5" value="3" class="confidence-slider" id="confidence">
+            <div class="slider-labels">
+                <span>Guessing</span>
+                <span>Unsure</span>
+                <span>Neutral</span>
+                <span>Confident</span>
+                <span>Certain</span>
+            </div>
+
+            <button class="btn" onclick="generateQuestion()" id="gen-btn">Generate Challenge</button>
+            <br><br>
+            <button class="btn" style="background: var(--danger); display: none;" onclick="submitFailure()" id="fail-btn">I failed this question</button>
+            
+            <div id="action-box"></div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch Proficiency Map
+        async function fetchProficiency() {
+            try {
+                // We use mock response structure as defined in our controller for the test
+                const res = await fetch('/api/proficiency-map');
+                if (!res.ok) throw new Error("Network error");
+                const data = await res.json();
+                
+                const container = document.getElementById('proficiency-container');
+                container.innerHTML = '';
+
+                data.proficiencies.forEach(prof => {
+                    const pct = (prof.depthLevel / 6) * 100;
+                    let color = '#3b82f6';
+                    if(prof.mastery === 'Foundation Level') color = '#ef4444';
+                    else if(prof.mastery === 'High') color = '#10b981';
+
+                    container.innerHTML += `
+                        <div class="prof-item">
+                            <div class="prof-header">
+                                <span>${prof.chapter}</span>
+                                <span style="color: ${color};">${prof.mastery} (Lvl ${prof.depthLevel})</span>
+                            </div>
+                            <div class="prof-bar-bg">
+                                <div class="prof-bar-fill" style="width: ${pct}%; background: ${color}"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                document.getElementById('proficiency-container').innerHTML = 
+                    `<p style="color: #ef4444;">Failed to load data. Ensure backend is running.</p>`;
+            }
+        }
+
+        // Generate Bridge Question
+        async function generateQuestion() {
+            const btn = document.getElementById('gen-btn');
+            const qBox = document.getElementById('bridge-question');
+            
+            btn.innerText = "Generating...";
+            qBox.innerHTML = "<span style='color: var(--text-muted);'>Synthesizing concepts via Gemini 1.5 Flash...</span>";
+
+            try {
+                const res = await fetch('/api/generate-bridge?t1=Solutions&t2=Electrochemistry');
+                if(!res.ok) throw new Error("API Error");
+                const data = await res.json();
+                
+                qBox.innerHTML = `<strong>Topic Bridge:</strong> ${data.topic_bridge ? data.topic_bridge.join(' + ') : 'Solutions + Electrochemistry'}<br><br>${data.question_text || data.error || 'Question loaded successfully.'}`;
+                document.getElementById('fail-btn').style.display = 'block';
+                document.getElementById('action-box').style.display = 'none';
+
+            } catch(e) {
+                // Mock behavior if API key 404s
+                qBox.innerHTML = "<strong>Simulated Output:</strong> Evaluate the effect of diluting a 0.1 M aqueous solution of CuSO4 on its molar conductivity and specific conductance. If this solution is then used in a galvanic cell with a standard Zinc half-cell, how does the initial dilution impact the calculated EMF of the cell using the Nernst equation?";
+                document.getElementById('fail-btn').style.display = 'block';
+                document.getElementById('action-box').style.display = 'none';
+            }
+            btn.innerText = "Generate Another";
+        }
+
+        // Submit Failure to get Next Action
+        async function submitFailure() {
+            const conf = document.getElementById('confidence').value;
+            try {
+                const res = await fetch('/api/generate-bridge/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        isCorrect: false,
+                        bloomLevel: 5,
+                        topic: "Electrochemistry & Solutions",
+                        confidence: parseInt(conf)
+                    })
+                });
+                const data = await res.json();
+                
+                const actionBox = document.getElementById('action-box');
+                actionBox.innerHTML = `<strong>Recommended Action:</strong> ${data.recommendedAction}`;
+                actionBox.style.display = 'block';
+                actionBox.style.background = 'rgba(239, 68, 68, 0.1)';
+                actionBox.style.borderColor = 'var(--danger)';
+            } catch(e) {
+                alert('Backend not responding.');
+            }
+        }
+
+        // Init
+        fetchProficiency();
+    </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: chemistry-qb-backend
+    env: docker
+    region: oregon
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: APP_DOMAIN
+        sync: false
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
