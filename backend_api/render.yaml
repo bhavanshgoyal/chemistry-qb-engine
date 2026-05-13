@@ -2,6 +2,7 @@ services:
   - type: web
     name: chemistry-qb-backend
     env: docker
+    rootDir: backend_api
     region: oregon
     plan: free
     envVars:

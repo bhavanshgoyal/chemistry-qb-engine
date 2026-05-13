@@ -1,7 +1,7 @@
 import os
 import json
 import fitz  # PyMuPDF
-import google.generativeai as genai
+from google import genai
 import requests
 from dotenv import load_dotenv
 
@@ -12,11 +12,9 @@ load_dotenv(env_path)
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
     print("WARNING: GEMINI_API_KEY not found in environment!")
-else:
-    os.environ["GOOGLE_API_KEY"] = api_key
 
-# Configure Gemini API
-genai.configure(api_key=api_key)
+# 1. NEW GEMINI CLIENT INITIALIZATION
+client = genai.Client(api_key=api_key)
 
 def load_syllabus():
     config_path = os.path.join(os.path.dirname(__file__), "..", "config", "cbse_class12_syllabus_2026.json")
@@ -62,8 +60,11 @@ def analyze_questions_with_gemini(text, syllabus):
     IMPORTANT: Return a JSON array of these objects, one for each question identified in the text. Ensure the output is strictly valid JSON, without any markdown formatting blocks like ```json.
     """
     
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
-    response = model.generate_content(prompt)
+    # 2. NEW GENERATION SYNTAX
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt,
+    )
     
     try:
         output = response.text.strip()
@@ -83,6 +84,10 @@ def main():
     syllabus = load_syllabus()
     raw_pdfs_dir = os.path.join(os.path.dirname(__file__), "raw_pdfs")
     
+    # 3. UPDATE THIS TO YOUR RENDER URL
+    # Change this to "https://YOUR-APP-NAME.onrender.com/api/questions"
+    api_url = "http://localhost:8080/api/questions"
+    
     for filename in os.listdir(raw_pdfs_dir):
         if filename.endswith(".pdf") or filename.endswith(".txt"):
             file_path = os.path.join(raw_pdfs_dir, filename)
@@ -101,7 +106,7 @@ def main():
                 for q in results:
                     if q.get("status") != "OUTDATED":
                         try:
-                            res = requests.post("http://localhost:8080/api/questions", json=q)
+                            res = requests.post(api_url, json=q)
                             if res.status_code == 200:
                                 print(f"Successfully saved question: {q.get('topic')} - {q.get('sub_topic')}")
                             else:
