@@ -3,9 +3,11 @@ import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-do
 import FileUploader from './components/FileUploader';
 import QuestionTable from './components/QuestionTable';
 import StudentSolve from './components/StudentSolve';
+import VideoManager from './components/VideoManager';
 
 /* ─── Icons (inline SVG so size is always explicit) ─────── */
 const Icon = {
+  video:     (s=18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
   dashboard: (s=18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
   upload:    (s=18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>,
   book:      (s=18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>,
@@ -187,8 +189,8 @@ function UploadPage({ triggerRefresh }) {
             <span style={{ color:'#fff', display:'flex' }}>{Icon.upload(20)}</span>
           </div>
           <div>
-            <div className="heading-sm">Upload PDF</div>
-            <div className="text-sub">AI-powered question extraction</div>
+            <div className="heading-sm">Upload PDFs</div>
+            <div className="text-sub">AI-powered · multiple files at once</div>
           </div>
         </div>
         <FileUploader onUploadSuccess={triggerRefresh} />
@@ -252,8 +254,9 @@ function TeacherDashboard() {
         <nav style={{ flex:1, padding:'20px 10px', overflowY:'auto' }}>
           <div className="nav-label-group">Main</div>
           <SideLink to="/"          iconFn={Icon.dashboard} label="Dashboard"    end />
-          <SideLink to="/upload"    iconFn={Icon.upload}    label="Upload PDF"       />
+          <SideLink to="/upload"    iconFn={Icon.upload}    label="Upload PDFs"      />
           <SideLink to="/questions" iconFn={Icon.book}      label="Question Bank"    />
+          <SideLink to="/videos"    iconFn={Icon.video}     label="Video Library"    />
           <div className="nav-label-group" style={{ marginTop:20 }}>Student</div>
           <SideLink to="/solve/demo" iconFn={Icon.beaker} label="Student Solve" />
         </nav>
@@ -303,6 +306,7 @@ function TeacherDashboard() {
             <Route path="/"          element={<DashboardPage refreshTrigger={refreshTrigger} triggerRefresh={triggerRefresh} />} />
             <Route path="/upload"    element={<UploadPage    triggerRefresh={triggerRefresh} />} />
             <Route path="/questions" element={<QuestionBankPage refreshTrigger={refreshTrigger} triggerRefresh={triggerRefresh} />} />
+            <Route path="/videos"    element={<VideoManager />} />
           </Routes>
         </main>
 

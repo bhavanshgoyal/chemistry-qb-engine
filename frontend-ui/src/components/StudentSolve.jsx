@@ -1,117 +1,269 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import api from '../services/api';
+
+const BLOOM = {
+  1: 'Remembering', 2: 'Understanding', 3: 'Applying',
+  4: 'Analyzing',   5: 'Evaluating',    6: 'Creating',
+};
 
 const StudentSolve = () => {
   const { questionId } = useParams();
-  const [answer, setAnswer] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  
-  // Dummy question data for now
-  const questionContext = {
-    topic: "Chemical Kinetics",
-    text: "Explain the effect of a catalyst on the activation energy and the rate of a chemical reaction. Provide a real-world example."
+  const [question,   setQuestion]   = useState(null);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState('');
+  const [answer,     setAnswer]     = useState('');
+  const [submitted,  setSubmitted]  = useState(false);
+  const [confidence, setConfidence] = useState(3);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch question from real API
+  useEffect(() => {
+    if (!questionId || questionId === 'demo') {
+      // Demo mode fallback
+      setQuestion({
+        id: 'demo',
+        chapter: 'Chemical Kinetics',
+        topic: 'Activation Energy',
+        bloomLevel: 3,
+        questionText: 'Explain the effect of a catalyst on the activation energy and rate of a chemical reaction. Provide a real-world example.',
+        explanation: 'A catalyst lowers activation energy without being consumed.',
+        videoUrl: null,
+      });
+      setLoading(false);
+      return;
+    }
+
+    api.get(`/api/questions/${questionId}`)
+      .then(res => { setQuestion(res.data); setLoading(false); })
+      .catch(() => {
+        setError('Question not found or server unavailable.');
+        setLoading(false);
+      });
+  }, [questionId]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (answer.trim().length < 10) return;
+    setSubmitting(true);
+
+    // Submit attempt to backend
+    if (question?.id && question.id !== 'demo') {
+      try {
+        await api.post('/api/generate-bridge/submit', {
+          questionId: question.id,
+          bloomLevel: question.bloomLevel,
+          topic:      question.chapter,
+          isCorrect:  true,              // teacher grades later; default optimistic
+          confidence,
+        });
+      } catch { /* non-blocking */ }
+    }
+
+    setSubmitted(true);
+    setSubmitting(false);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (answer.trim().length > 10) {
-      setSubmitted(true);
-    }
-  };
+  // ── Loading / Error states ────────────────────────────────────────────────
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(135deg, #0a0520 0%, #06031a 100%)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <svg className="spin" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2">
+          <path d="M21 12a9 9 0 11-6.219-8.56"/>
+        </svg>
+        <span style={{ color: '#7c6fa0', fontWeight: 600 }}>Loading question…</span>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(135deg, #0a0520 0%, #06031a 100%)' }}>
+      <div style={{ textAlign: 'center', color: '#fca5a5', fontWeight: 600 }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+        {error}
+        <div style={{ marginTop: 16 }}>
+          <Link to="/" style={{ color: '#c084fc', fontWeight: 700, textDecoration: 'none' }}>← Back to Dashboard</Link>
+        </div>
+      </div>
+    </div>
+  );
+
+  const embedUrl = question?.videoUrl
+    ? question.videoUrl.replace('watch?v=', 'embed/') + '?rel=0&showinfo=0&modestbranding=1'
+    : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-slate-100 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900 flex flex-col">
-      {/* Mobile-optimized Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md">
-            CQ
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0a0520 0%, #06031a 100%)',
+      fontFamily: "'Inter', sans-serif",
+      WebkitFontSmoothing: 'antialiased',
+      display: 'flex', flexDirection: 'column',
+    }}>
+
+      {/* Header */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 50,
+        background: 'rgba(6,3,20,0.9)', backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(139,92,246,0.2)',
+        padding: '14px 24px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'Outfit,sans-serif', fontWeight: 900, fontSize: 13, color: '#fff',
+          }}>CQ</div>
+          <div style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 800, fontSize: 15, color: '#f0eaff' }}>
+            Question #{question?.id}
           </div>
-          <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight">
-            Solve Q-{questionId || '101'}
-          </h1>
         </div>
-        <Link to="/" className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition-colors">
-          Exit
-        </Link>
+        <Link to="/" style={{
+          fontSize: 12, fontWeight: 700, color: '#c084fc',
+          background: 'rgba(192,132,252,0.12)',
+          border: '1px solid rgba(192,132,252,0.25)',
+          padding: '7px 16px', borderRadius: 20, textDecoration: 'none',
+        }}>← Dashboard</Link>
       </header>
 
-      {/* Main Content Container - Mobile First */}
-      <main className="flex-1 w-full max-w-lg mx-auto p-4 sm:p-6 flex flex-col space-y-6 animate-fade-in-up mt-4">
-        
-        {/* Question Card */}
-        <section className="bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-6 sm:p-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold mb-4">
-            <svg className="w-3.5 h-3.5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-            {questionContext.topic}
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 leading-snug">
-            {questionContext.text}
-          </h2>
-        </section>
+      {/* Main */}
+      <main style={{ flex: 1, width: '100%', maxWidth: 680, margin: '0 auto', padding: '28px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {/* Interaction Area */}
-        <section className="flex-1 flex flex-col">
-          {!submitted ? (
-            <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-4">
-              <label htmlFor="answer" className="text-sm font-bold text-slate-600 ml-2">
-                Your Answer
-              </label>
-              <textarea
-                id="answer"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="Type your thought process here to unlock the solution video..."
-                className="flex-1 min-h-[200px] w-full p-5 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-[1.5rem] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all resize-none shadow-inner"
-                required
-              />
-              
-              <button
-                type="submit"
-                disabled={answer.trim().length < 10}
-                className={`w-full py-4 rounded-[1.25rem] font-bold text-lg transition-all duration-300 ${
-                  answer.trim().length >= 10 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 hover:-translate-y-0.5' 
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                }`}
-              >
-                Submit to Unlock Solution
-              </button>
-            </form>
-          ) : (
-            <div className="flex flex-col space-y-6 animate-fade-in-up">
-              <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex gap-3 items-start">
-                <div className="bg-emerald-100 text-emerald-600 rounded-full p-1 mt-0.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
-                </div>
-                <div>
-                  <h3 className="font-bold text-emerald-800">Answer Submitted!</h3>
-                  <p className="text-sm text-emerald-600 font-medium mt-1">Great job. Now, watch the solution below to verify your understanding.</p>
-                </div>
-              </div>
-
-              {/* Responsive 16:9 Video Embed */}
-              <div className="w-full bg-slate-900 rounded-[1.5rem] overflow-hidden shadow-xl shadow-slate-300/50 border border-slate-200 relative aspect-video">
-                <iframe 
-                  className="absolute inset-0 w-full h-full"
-                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&showinfo=0&modestbranding=1" 
-                  title="Video Solution" 
-                  frameBorder="0" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                ></iframe>
-              </div>
-
-              <button 
-                onClick={() => setSubmitted(false)}
-                className="w-full py-4 bg-white border-2 border-slate-200 text-slate-600 rounded-[1.25rem] font-bold text-lg hover:bg-slate-50 hover:border-slate-300 transition-all"
-              >
-                Revise My Answer
-              </button>
-            </div>
+        {/* Metadata chips */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {question?.chapter && (
+            <span style={{
+              fontSize: 11, fontWeight: 700, color: '#c4b5fd',
+              background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)',
+              padding: '4px 12px', borderRadius: 999,
+            }}>📚 {question.chapter}</span>
           )}
-        </section>
+          {question?.topic && (
+            <span style={{
+              fontSize: 11, fontWeight: 700, color: '#a5b4fc',
+              background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',
+              padding: '4px 12px', borderRadius: 999,
+            }}>{question.topic}</span>
+          )}
+          {question?.bloomLevel && (
+            <span style={{
+              fontSize: 11, fontWeight: 700, color: '#f0abfc',
+              background: 'rgba(217,70,239,0.12)', border: '1px solid rgba(217,70,239,0.25)',
+              padding: '4px 12px', borderRadius: 999,
+            }}>🧠 Level {question.bloomLevel} — {BLOOM[question.bloomLevel]}</span>
+          )}
+        </div>
 
+        {/* Question card */}
+        <div className="glass-panel" style={{ padding: 28 }}>
+          <p style={{
+            fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: '1.15rem',
+            color: '#f0eaff', lineHeight: 1.55, margin: 0,
+            textShadow: '0 2px 16px rgba(0,0,0,0.5)',
+          }}>
+            {question?.questionText}
+          </p>
+          {question?.explanation && !submitted && (
+            <p style={{ marginTop: 12, fontSize: 12, color: '#7c6fa0', fontStyle: 'italic', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+              Hint: {question.explanation}
+            </p>
+          )}
+        </div>
+
+        {/* Answer / Result */}
+        {!submitted ? (
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#c4b5fd' }}>Your Answer</label>
+            <textarea
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              placeholder="Type your thought process here to unlock the video solution…"
+              style={{
+                minHeight: 180, width: '100%', padding: 16,
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)',
+                borderRadius: 14, color: '#e2d9f3', fontSize: 13, fontWeight: 500,
+                lineHeight: 1.6, resize: 'vertical', outline: 'none',
+                transition: 'border-color 0.25s',
+                boxSizing: 'border-box',
+              }}
+              onFocus={e => e.target.style.borderColor = 'rgba(168,85,247,0.5)'}
+              onBlur={e  => e.target.style.borderColor = 'rgba(139,92,246,0.2)'}
+            />
+
+            {/* Confidence slider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#7c6fa0', whiteSpace: 'nowrap' }}>
+                Confidence: {confidence}/5
+              </label>
+              <input type="range" min="1" max="5" value={confidence}
+                onChange={e => setConfidence(Number(e.target.value))}
+                style={{ flex: 1, accentColor: '#a855f7' }} />
+            </div>
+
+            <button
+              type="submit"
+              disabled={answer.trim().length < 10 || submitting}
+              className="btn-primary"
+              style={{ width: '100%', justifyContent: 'center', fontSize: 14, padding: '14px 0' }}
+            >
+              {submitting ? 'Submitting…' : 'Submit to Unlock Video Solution'}
+            </button>
+          </form>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Success banner */}
+            <div style={{
+              padding: '12px 16px', borderRadius: 12,
+              background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)',
+              display: 'flex', gap: 10, alignItems: 'center',
+            }}>
+              <span style={{ fontSize: 18 }}>✅</span>
+              <div>
+                <div style={{ fontWeight: 700, color: '#6ee7b7', fontSize: 13 }}>Answer Submitted!</div>
+                <div style={{ fontSize: 12, color: '#34d399' }}>Watch the solution below to verify your understanding.</div>
+              </div>
+            </div>
+
+            {/* Video embed — real YouTube URL from question.videoUrl */}
+            {embedUrl ? (
+              <div style={{
+                borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(139,92,246,0.25)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)', position: 'relative', paddingTop: '56.25%',
+              }}>
+                <iframe
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                  src={embedUrl}
+                  title="Video Solution"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              <div className="glass-inner" style={{ padding: 24, textAlign: 'center' }}>
+                <div style={{ fontSize: 28, marginBottom: 10 }}>🎬</div>
+                <div style={{ color: '#7c6fa0', fontWeight: 600, fontSize: 13 }}>
+                  No video linked to this question yet.
+                </div>
+                <div style={{ color: '#4c4168', fontSize: 11, marginTop: 6 }}>
+                  The teacher can add one via the Videos section in the dashboard.
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => { setSubmitted(false); setAnswer(''); }}
+              className="btn-ghost"
+              style={{ width: '100%', justifyContent: 'center', fontSize: 13, padding: '12px 0' }}
+            >
+              ↩ Revise My Answer
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -1,6 +1,10 @@
 # --- Secrets & Credentials (CRITICAL) ---
+# Root .env files contain API keys — NEVER commit these
 .env
-.env.*
+# Allow environment-specific files — these contain NO secrets, only public URLs
+!.env.production
+!.env.development
+
 secrets.json
 *.pem
 *.key

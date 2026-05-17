@@ -17,6 +17,9 @@ public class QuestionAttempt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // FIX: added studentId — without this, proficiency tracking is meaningless
+    private String studentId;
+
     private Long questionId;
     private Boolean isCorrect;
     private Boolean isSkipped;
