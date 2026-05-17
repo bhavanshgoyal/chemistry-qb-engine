@@ -1,139 +1,123 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
+const BADGE = {
+  Remembering:  'badge badge-emerald',
+  Understanding:'badge badge-teal',
+  Applying:     'badge badge-cyan',
+  Analyzing:    'badge badge-indigo',
+  Evaluating:   'badge badge-violet',
+  Creating:     'badge badge-fuchsia',
+};
+
 const QuestionTable = ({ refreshTrigger }) => {
-  const [questions, setQuestions] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [questions,   setQuestions]   = useState([]);
+  const [searchTerm,  setSearchTerm]  = useState('');
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState('');
 
   const fetchQuestions = async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      const response = await api.get('/api/questions');
-      const data = response.data.content || response.data || [];
+      const res  = await api.get('/api/questions');
+      const data = res.data.content || res.data || [];
       setQuestions(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
       setError('Failed to fetch questions. The server might be cold-starting.');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchQuestions();
-  }, [refreshTrigger]);
+  useEffect(() => { fetchQuestions(); }, [refreshTrigger]);
 
-  const filteredQuestions = questions.filter((q) => {
-    const searchLower = searchTerm.toLowerCase();
+  const filtered = questions.filter((q) => {
+    const s = searchTerm.toLowerCase();
     return (
-      (q.topic && q.topic.toLowerCase().includes(searchLower)) ||
-      (q.subTopic && q.subTopic.toLowerCase().includes(searchLower)) ||
-      (q.bloomsLevel && q.bloomsLevel.toLowerCase().includes(searchLower)) ||
-      (q.questionText && q.questionText.toLowerCase().includes(searchLower))
+      q.topic?.toLowerCase().includes(s)       ||
+      q.subTopic?.toLowerCase().includes(s)    ||
+      q.bloomsLevel?.toLowerCase().includes(s) ||
+      q.questionText?.toLowerCase().includes(s)
     );
   });
 
-  const getBloomBadgeStyle = (level) => {
-    switch (level) {
-      case 'Remembering':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'Understanding':
-        return 'bg-teal-100 text-teal-800 border-teal-200';
-      case 'Applying':
-        return 'bg-cyan-100 text-cyan-800 border-cyan-200';
-      case 'Analyzing':
-        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-      case 'Evaluating':
-        return 'bg-violet-100 text-violet-800 border-violet-200';
-      case 'Creating':
-        return 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200';
-      default:
-        return 'bg-slate-100 text-slate-800 border-slate-200';
-    }
-  };
-
   return (
-    <div className="w-full bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col transition-all">
-      <div className="p-8 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Question Bank</h2>
-          <p className="text-slate-500 mt-1 font-medium text-sm">Review, filter, and manage your AI-generated questions.</p>
-        </div>
-        <div className="relative w-full sm:w-80 group">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+    <div style={{ display:'flex', flexDirection:'column' }}>
+
+      {/* Search */}
+      <div style={{ padding:'16px 24px', borderBottom:'1px solid rgba(255,255,255,0.06)', background:'rgba(4,2,16,0.5)' }}>
+        <div style={{ position:'relative', width:'100%', maxWidth:340 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4c4168" strokeWidth="2"
+            style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
           <input
+            className="glass-input"
+            style={{ paddingLeft:36, width:'100%' }}
             type="text"
-            className="block w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl leading-5 bg-slate-50/50 placeholder-slate-400 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white sm:text-sm transition-all shadow-sm"
-            placeholder="Search topics, questions, or taxonomy..."
+            placeholder="Search topics, taxonomy, questions…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-        <table className="min-w-full divide-y divide-slate-200 border-b border-slate-200">
-          <thead className="bg-slate-50/90 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+      {/* Table */}
+      <div style={{ overflowX:'auto', maxHeight:500, overflowY:'auto' }}>
+        <table className="q-table">
+          <thead>
             <tr>
-              <th scope="col" className="px-8 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Topic & Sub-topic
-              </th>
-              <th scope="col" className="px-8 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Bloom's Level
-              </th>
-              <th scope="col" className="px-8 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Question Text
-              </th>
+              <th>Topic &amp; Sub-topic</th>
+              <th>Bloom's Level</th>
+              <th>Question</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-100">
+          <tbody>
             {loading ? (
               <tr>
-                <td colSpan="3" className="px-8 py-16 text-center">
-                  <div className="flex flex-col items-center justify-center">
-                    <svg className="animate-spin h-10 w-10 text-indigo-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <td colSpan={3} style={{ textAlign:'center', padding:'60px 24px' }}>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
+                    <svg className="spin" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2">
+                      <path d="M21 12a9 9 0 11-6.219-8.56"/>
                     </svg>
-                    <span className="text-slate-500 font-medium">Loading questions... (Waking up the server)</span>
+                    <span className="text-sub">Loading questions… (waking up server)</span>
                   </div>
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan="3" className="px-8 py-16 text-center text-rose-500 font-medium">
+                <td colSpan={3} style={{ textAlign:'center', padding:'60px 24px', color:'#fca5a5', fontSize:13, fontWeight:600 }}>
                   {error}
                 </td>
               </tr>
-            ) : filteredQuestions.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan="3" className="px-8 py-16 text-center">
-                  <div className="text-slate-400 font-medium text-lg">
-                    {searchTerm ? 'No questions match your search criteria.' : 'No questions found. Upload a document to generate some!'}
-                  </div>
+                <td colSpan={3} style={{ textAlign:'center', padding:'60px 24px' }}>
+                  <span className="text-dim" style={{ fontSize:13 }}>
+                    {searchTerm
+                      ? 'No questions match your search.'
+                      : 'No questions yet — upload a document to generate some!'}
+                  </span>
                 </td>
               </tr>
             ) : (
-              filteredQuestions.map((question, index) => (
-                <tr key={question.id || index} className="even:bg-slate-50/50 hover:bg-slate-100/70 transition-colors duration-150">
-                  <td className="px-8 py-5 whitespace-nowrap">
-                    <div className="text-sm font-bold text-slate-800">{question.topic}</div>
-                    <div className="text-sm font-medium text-slate-500 mt-0.5">{question.subTopic}</div>
+              filtered.map((q, i) => (
+                <tr key={q.id || i}>
+                  <td style={{ whiteSpace:'nowrap', minWidth:160 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:'#e2d9f3', textShadow:'0 1px 8px rgba(0,0,0,0.5)' }}>
+                      {q.topic}
+                    </div>
+                    <div className="text-sub" style={{ marginTop:3 }}>{q.subTopic}</div>
                   </td>
-                  <td className="px-8 py-5 whitespace-nowrap">
-                    <span className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border ${getBloomBadgeStyle(question.bloomsLevel)} shadow-sm`}>
-                      {question.bloomsLevel || 'N/A'}
+                  <td style={{ whiteSpace:'nowrap' }}>
+                    <span className={BADGE[q.bloomsLevel] || 'badge badge-default'}>
+                      {q.bloomsLevel || 'N/A'}
                     </span>
                   </td>
-                  <td className="px-8 py-5 text-sm text-slate-600 font-medium max-w-2xl truncate hover:whitespace-normal hover:break-words leading-relaxed">
-                    {question.questionText}
+                  <td style={{ maxWidth:480 }}>
+                    <p style={{ fontSize:12, fontWeight:500, color:'#a89cc8', lineHeight:1.6, margin:0,
+                      display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
+                      {q.questionText}
+                    </p>
                   </td>
                 </tr>
               ))
@@ -141,11 +125,18 @@ const QuestionTable = ({ refreshTrigger }) => {
           </tbody>
         </table>
       </div>
-      
-      {/* Table Footer Status */}
-      {!loading && !error && filteredQuestions.length > 0 && (
-        <div className="bg-slate-50 border-t border-slate-100 px-8 py-4 text-xs font-medium text-slate-500 flex justify-between items-center">
-          <span>Showing <span className="font-bold text-slate-700">{filteredQuestions.length}</span> question{filteredQuestions.length !== 1 ? 's' : ''}</span>
+
+      {/* Count footer */}
+      {!loading && !error && filtered.length > 0 && (
+        <div style={{
+          padding:'10px 24px', borderTop:'1px solid rgba(255,255,255,0.05)',
+          background:'rgba(4,2,16,0.65)', fontSize:11, fontWeight:600, color:'#4c4168',
+          display:'flex', justifyContent:'space-between',
+        }}>
+          <span>
+            Showing <strong style={{ color:'#c4b5fd' }}>{filtered.length}</strong>{' '}
+            question{filtered.length !== 1 ? 's' : ''}
+          </span>
         </div>
       )}
     </div>
