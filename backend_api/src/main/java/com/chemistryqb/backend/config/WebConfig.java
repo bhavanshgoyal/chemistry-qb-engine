@@ -25,7 +25,7 @@ public class WebConfig {
                 "http://localhost:3000",
                 // ↓ Replace these with your actual deployed frontend URLs
 
-                "https://chemistry-qb-engine.vercel.app/"));
+                "https://chemistry-qb-engine.vercel.app"));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of(
