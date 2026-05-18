@@ -21,7 +21,7 @@ public class DataSeeder {
                 q1.setBloomLevel(3);
                 q1.setQuestionText("What is the molarity of a solution containing 5g of $NaOH$ in 450 mL of solution?");
                 q1.setExplanation("Basic calculation");
-                q1.setVideoUrl("https://www.youtube.com/watch?v=molarity_placeholder");
+                q1.setVideoUrl(null);   // teacher adds videos via VideoManager
                 repository.save(q1);
 
                 Question q2 = new Question();
@@ -30,16 +30,10 @@ public class DataSeeder {
                 q2.setBloomLevel(5);
                 q2.setQuestionText("Evaluate the effect of diluting a $0.1 M$ aqueous solution...");
                 q2.setExplanation("Nernst equation application");
-                q2.setVideoUrl("https://www.youtube.com/watch?v=nernst_placeholder");
+                q2.setVideoUrl(null);   // teacher adds videos via VideoManager
                 repository.save(q2);
-            } else {
-                for (Question q : questions) {
-                    if (q.getVideoUrl() == null) {
-                        q.setVideoUrl("https://www.youtube.com/watch?v=example_" + q.getId());
-                        repository.save(q);
-                    }
-                }
             }
+            // Removed: no longer overwrites existing null videoUrls with fake placeholders
         };
     }
 }

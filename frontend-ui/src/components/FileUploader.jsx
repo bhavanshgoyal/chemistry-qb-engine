@@ -134,9 +134,10 @@ const FileUploader = ({ onUploadSuccess }) => {
         onClick={!loading ? () => inputRef.current.click() : undefined}
       >
         <input
-          ref={inputRef} type="file"
+          ref={inputRef}
+          type="file"
           accept=".pdf,.txt"
-          multiple                          {/* multi-file */}
+          multiple
           onChange={handleChange}
           style={{ display: 'none' }}
         />

@@ -44,7 +44,7 @@ public class RemediationService {
         double scorePercentage = (double) correctCount / currentAttempts.size() * 100;
 
         if (avgConfidence < 2.0) {
-            return new RemediationDTO("It seems you're struggling with confidence across these topics. Let's start with a Chapter Overview.", "https://www.youtube.com/watch?v=chapter_overview_placeholder");
+            return new RemediationDTO("It seems you're struggling with confidence across these topics. Let's start with a Chapter Overview.", null);
         }
 
         if (scorePercentage < 40.0) {
@@ -59,7 +59,7 @@ public class RemediationService {
                 .map(Map.Entry::getKey)
                 .orElse("General");
 
-            return new RemediationDTO("Your score is below 40%. It looks like you're having trouble with " + worstTopic + ". Here's a foundational video.", "https://www.youtube.com/watch?v=foundations_" + worstTopic.replaceAll("\\s+",""));
+            return new RemediationDTO("Your score is below 40%. It looks like you're having trouble with " + worstTopic + ". Here's a foundational video.", null);
         }
 
         return new RemediationDTO("Great job! Keep up the good work.", null);

@@ -10,28 +10,32 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { config, message } = error;
-    
-    // Initialize retry count if it doesn't exist
-    if (!config || typeof config.retry === 'undefined') {
-      config.retry = 0;
+
+    // Guard: if config is missing, we can't retry
+    if (!config) return Promise.reject(error);
+
+    // Initialize retry count using a namespaced key to avoid mutating sealed config objects
+    if (typeof config._retryCount === 'undefined') {
+      config._retryCount = 0;
     }
 
     // Check if the error is a timeout or network error (symptoms of a cold start)
-    if (message.includes('timeout') || message.includes('Network Error') || error.response?.status === 502) {
-      config.retry += 1;
-      
-      // Retry up to 3 times
-      if (config.retry <= 3) {
-        // Exponential backoff delay: 2s, 4s, 8s
-        const delay = Math.pow(2, config.retry) * 1000;
-        
-        console.warn(`API request failed (Cold start suspected). Retrying in ${delay}ms... (Attempt ${config.retry} of 3)`);
-        
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        return api(config);
-      }
+    const isRetryable = message?.includes('timeout') ||
+                        message?.includes('Network Error') ||
+                        error.response?.status === 502;
+
+    if (isRetryable && config._retryCount < 3) {
+      config._retryCount += 1;
+
+      // Exponential backoff delay: 2s, 4s, 8s
+      const delay = Math.pow(2, config._retryCount) * 1000;
+
+      console.warn(`API request failed (Cold start suspected). Retrying in ${delay}ms... (Attempt ${config._retryCount} of 3)`);
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return api(config);
     }
-    
+
     return Promise.reject(error);
   }
 );

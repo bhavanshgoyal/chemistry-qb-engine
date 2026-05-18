@@ -32,9 +32,9 @@ public class DiagnosticController {
 
     @PostMapping("/submit")
     public ResponseEntity<Map<String, Object>> submitAnswer(@RequestBody Map<String, Object> payload) {
-        boolean isCorrect = (Boolean) payload.get("isCorrect");
-        int bloomLevel = (Integer) payload.get("bloomLevel");
-        String topic = (String) payload.get("topic");
+        boolean isCorrect = Boolean.TRUE.equals(payload.get("isCorrect"));
+        int bloomLevel = payload.get("bloomLevel") instanceof Number n ? n.intValue() : 1;
+        String topic = String.valueOf(payload.getOrDefault("topic", "General"));
 
         String recommendedAction = proficiencyService.determineNextAction(bloomLevel, isCorrect, topic);
         

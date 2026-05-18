@@ -327,8 +327,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/*"                 element={<TeacherDashboard />} />
         <Route path="/solve/:questionId" element={<StudentSolve />} />
+        <Route path="/*"                 element={<TeacherDashboard />} />
       </Routes>
     </Router>
   );

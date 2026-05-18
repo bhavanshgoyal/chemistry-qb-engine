@@ -21,7 +21,7 @@ const QuestionTable = ({ refreshTrigger }) => {
     setLoading(true); setError('');
     try {
       const res  = await api.get('/api/questions');
-      const data = res.data.content || res.data || [];
+      const data = Array.isArray(res.data) ? res.data : (res.data?.content ?? []);
       setQuestions(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);

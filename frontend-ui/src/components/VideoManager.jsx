@@ -322,7 +322,7 @@ const VideoManager = () => {
               {/* Actions */}
               <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 <button
-                  onClick={() => { setEditTarget(v); setShowForm(false); }}
+                  onClick={() => { setEditTarget(v); setShowForm(true); }}
                   style={{
                     flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                     fontSize: 11, fontWeight: 700, padding: '7px 0', borderRadius: 8, cursor: 'pointer',
@@ -348,8 +348,7 @@ const VideoManager = () => {
       )}
 
       {/* Modals */}
-      {showForm && <VideoForm onSave={handleAdd} onClose={() => setShowForm(false)} />}
-      {editTarget && <VideoForm initial={editTarget} onSave={handleEdit} onClose={() => setEditTarget(null)} />}
+      {showForm && <VideoForm initial={editTarget} onSave={editTarget ? handleEdit : handleAdd} onClose={() => { setShowForm(false); setEditTarget(null); }} />}
     </div>
   );
 };
