@@ -28,6 +28,7 @@ const FileUploader = ({ onUploadSuccess }) => {
   const [statusMsg, setStatusMsg]       = useState('');
   const [errorMsg, setErrorMsg]         = useState('');
   const [savedCount, setSavedCount]     = useState(0);
+  const [chunkProgress, setChunkProgress] = useState(null);
   const inputRef = useRef(null);
   const pollRef  = useRef(null);
 
@@ -67,6 +68,7 @@ const FileUploader = ({ onUploadSuccess }) => {
     if (!files.length) return;
     setLoading(true); setStatus('uploading'); setErrorMsg('');
     setStatusMsg(`Uploading ${files.length} document(s)…`); setSavedCount(0);
+    setChunkProgress(null);
 
     const fd = new FormData();
     files.forEach(f => fd.append('files', f));   // 'files' matches @RequestParam("files") MultipartFile[]
@@ -95,9 +97,17 @@ const FileUploader = ({ onUploadSuccess }) => {
     pollRef.current = setInterval(async () => {
       try {
         const res = await api.get(`/api/questions/upload/status/${jobId}`);
-        const { status: s, message, totalSaved } = res.data;
+        const { status: s, message, totalSaved, totalChunks, completedChunks, failedChunks } = res.data;
         setStatusMsg(message || 'Processing…');
-        if (totalSaved) setSavedCount(totalSaved);
+        setSavedCount(totalSaved || 0);
+
+        if (totalChunks > 0) {
+          setChunkProgress({
+            total: totalChunks,
+            completed: completedChunks || 0,
+            failed: failedChunks || 0,
+          });
+        }
 
         if (s === 'completed' || s === 'completed_with_errors') {
           clearInterval(pollRef.current);
@@ -244,11 +254,13 @@ const FileUploader = ({ onUploadSuccess }) => {
             <path d="M21 12a9 9 0 11-6.219-8.56"/>
           </svg>
           <span style={{ fontSize: 12, fontWeight: 600, color: '#c4b5fd' }}>{statusMsg}</span>
-          {savedCount > 0 && (
-            <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: '#a855f7' }}>
-              {savedCount} saved
-            </span>
-          )}
+          <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: '#a855f7', whiteSpace: 'nowrap' }}>
+            {chunkProgress?.total > 0
+              ? `${chunkProgress.completed}/${chunkProgress.total} chunks`
+              : savedCount > 0
+                ? `${savedCount} saved`
+                : ''}
+          </span>
         </div>
       )}
 
@@ -270,6 +282,12 @@ const FileUploader = ({ onUploadSuccess }) => {
           {savedCount > 0 && (
             <div style={{ fontSize: 12, color: '#34d399', fontWeight: 600, paddingLeft: 22 }}>
               🎓 {savedCount} question{savedCount !== 1 ? 's' : ''} added to your question bank
+            </div>
+          )}
+          {chunkProgress?.total > 0 && (
+            <div style={{ fontSize: 11, color: '#34d399', fontWeight: 600, paddingLeft: 22, marginTop: 4 }}>
+              Processed {chunkProgress.completed} of {chunkProgress.total} chunk{chunkProgress.total !== 1 ? 's' : ''}
+              {chunkProgress.failed > 0 ? ` · ${chunkProgress.failed} failed` : ''}
             </div>
           )}
         </div>

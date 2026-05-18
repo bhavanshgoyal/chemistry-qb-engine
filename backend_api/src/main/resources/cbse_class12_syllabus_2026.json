@@ -1,0 +1,94 @@
+{
+  "grade": 12,
+  "subject": "Chemistry",
+  "active_chapters": [
+    {
+      "chapter_name": "Solutions",
+      "sub_topics": [
+        "Types of Solutions",
+        "Concentration",
+        "Colligative Properties"
+      ]
+    },
+    {
+      "chapter_name": "Electrochemistry",
+      "sub_topics": [
+        "Electrochemical Cells",
+        "Nernst Equation",
+        "Conductance"
+      ]
+    },
+    {
+      "chapter_name": "Chemical Kinetics",
+      "sub_topics": [
+        "Rate of Reaction",
+        "Order of Reaction",
+        "Activation Energy"
+      ]
+    },
+    {
+      "chapter_name": "d and f Block Elements",
+      "sub_topics": [
+        "Properties of Transition Elements",
+        "Lanthanoids",
+        "Actinoids"
+      ]
+    },
+    {
+      "chapter_name": "Coordination Compounds",
+      "sub_topics": [
+        "Nomenclature",
+        "Isomerism",
+        "Bonding in Coordination Compounds"
+      ]
+    },
+    {
+      "chapter_name": "Haloalkanes and Haloarenes",
+      "sub_topics": [
+        "Nomenclature",
+        "Methods of Preparation",
+        "Chemical Reactions"
+      ]
+    },
+    {
+      "chapter_name": "Alcohols, Phenols and Ethers",
+      "sub_topics": [
+        "Preparation",
+        "Properties",
+        "Reactions"
+      ]
+    },
+    {
+      "chapter_name": "Aldehydes, Ketones and Carboxylic Acids",
+      "sub_topics": [
+        "Nomenclature",
+        "Preparation",
+        "Chemical Properties"
+      ]
+    },
+    {
+      "chapter_name": "Amines",
+      "sub_topics": [
+        "Structure",
+        "Classification",
+        "Reactions"
+      ]
+    },
+    {
+      "chapter_name": "Biomolecules",
+      "sub_topics": [
+        "Carbohydrates",
+        "Proteins",
+        "Nucleic Acids"
+      ]
+    }
+  ],
+  "excluded_chapters": [
+    "Solid State",
+    "Surface Chemistry",
+    "Metallurgy",
+    "p-Block",
+    "Polymers",
+    "Chemistry in Everyday Life"
+  ]
+}
