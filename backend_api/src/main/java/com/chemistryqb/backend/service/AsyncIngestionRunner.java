@@ -102,43 +102,63 @@ public class AsyncIngestionRunner {
         }
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Optimized Gemini AI Call (Anti-Laziness + Strict JSON Mode)
+    // ──────────────────────────────────────────────────────────────────────────
+
     private List<Map<String, Object>> analyzeWithGemini(String text) {
+        // Keep up to 30k characters for analysis
         String truncated = text.length() > 30000 ? text.substring(0, 30000) : text;
 
         String prompt = """
-                You are an expert CBSE Class 12 Chemistry educator and data extraction assistant.
+                You are an elite, highly meticulous CBSE Class 12 Chemistry educator and automated data extraction engine.
 
-                Analyze the following text and extract every chemistry question you can find.
-                For each question, determine which CBSE Class 12 chapter it belongs to.
+                [CRITICAL TASK]
+                Analyze the provided text exhaustively. Your goal is to construct a comprehensive, deep Question Bank.
+                Do not skim. Do not summarize. Do not cut corners or stop early. Extract as many valid chemistry questions as the text supports.
 
-                Return a JSON array where each element is one of these two formats:
+                [COMPREHENSIVE COVERAGE MANDATE]
+                For the extracted topics, you MUST generate and sort questions across all 6 layers of Bloom's Taxonomy:
+                1. Remembering (Definitions, basic formulas)
+                2. Understanding (Explaining trends, mechanisms, reasoning)
+                3. Applying (Solving numerical problems, calculating values)
+                4. Analyzing (Differentiating components, interpreting graphs/data tables)
+                5. Evaluating (Justifying a choice, assessing chemical behavior)
+                6. Creating (Synthesizing a concept layout or complex open-ended scenario)
 
-                If the question is relevant to CBSE Class 12 Chemistry:
+                Ensure you produce a balanced mix of these levels from the source text.
+
+                [OUTPUT FORMAT]
+                You must return a raw JSON array. Each object in the array must match this exact schema:
                 {
-                  "topic": "<CBSE chapter name>",
-                  "sub_topic": "<specific concept within the chapter>",
-                  "bloom_level": <integer 1-6 based on Bloom's taxonomy>,
-                  "question_text": "<full question text, use LaTeX for formulas like $H_2SO_4$>",
-                  "explanation": "<brief explanation of the answer or concept>"
+                  "topic": "<Exact CBSE Chapter name, e.g., Solutions, Electrochemistry, Chemical Kinetics, Coordination Compounds, Biomolecules>",
+                  "sub_topic": "<Specific topic or law, e.g., Nernst Equation, Raoult's Law>",
+                  "bloom_level": <Integer from 1 to 6>,
+                  "question_text": "<Clear question. Use standard text or markdown, and ALWAYS wrap chemical formulas or mathematical variables in inline LaTeX like $H_2SO_4$ or $\\Delta G$>",
+                  "explanation": "<Step-by-step complete solution or chemical rationale>"
                 }
 
-                If the question is NOT from CBSE Class 12 syllabus:
+                If a segment of text is completely irrelevant to the CBSE Class 12 Chemistry syllabus, output exactly:
                 { "status": "OUTDATED" }
 
-                Bloom's taxonomy reference:
-                1=Remembering, 2=Understanding, 3=Applying, 4=Analyzing, 5=Evaluating, 6=Creating
+                [STRICT CONSTRAINT]
+                Do not talk to me. Do not provide markdown formatting code fences like ```json. Do not include introductory text like "Here is your JSON". Output ONLY the valid raw JSON array object.
 
-                IMPORTANT: Return ONLY a valid JSON array with NO markdown formatting (no ```json blocks).
-
-                TEXT TO ANALYZE:
-                """ + truncated;
+                TEXT TO ENCODE AND SYNTHESIZE:
+                """
+                + truncated;
 
         String url = "[https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=](https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=)"
                 + geminiApiKey;
 
+        // Upgrade configuration to use responseMimeType
         Map<String, Object> body = Map.of(
                 "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
-                "generationConfig", Map.of("temperature", 0.1, "maxOutputTokens", 8192));
+                "generationConfig", Map.of(
+                        "temperature", 0.15,
+                        "maxOutputTokens", 8192,
+                        "responseMimeType", "application/json" // <-- FORCES GEMINI INTO STRICT JSON MODE
+                ));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
